@@ -29,9 +29,9 @@
   margin: 8px 0;
 }
 
-/* temporary */
-.cg-wrap coords {
-  opacity: 0 !important;
+.cg-wrap coords.files {
+  bottom: 2px !important;
+  left: 18px !important;
 }
 
 .chess-move-list {
