@@ -65,7 +65,7 @@ export default class ChesserMenu {
           this.chesser.loadFen(startingPosition.fen, startingPosition.moves);
         });
 
-        new Setting(sectionEl).setName("Enable Free Move?").addToggle((toggle) => {
+        new Setting(sectionEl).setName("Free Move").addToggle((toggle) => {
           toggle.setValue(this.chesser.getBoardState().movable.free);
           toggle.onChange((value) => {
             this.chesser.setFreeMove(value);
@@ -76,6 +76,21 @@ export default class ChesserMenu {
 
     this.movesListEl = this.containerEl.createDiv({
       cls: "chess-menu-section chess-menu-section-tall",
+    });
+
+    parentEl.createEl("a", "view-action", (btn: HTMLAnchorElement) => {
+      btn.ariaLabel = "Toggle menu";
+      setIcon(btn, "cross");
+      btn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        if (this.containerEl.style.display !== "none") {
+          this.containerEl.style.display = "none";
+          setIcon(btn, "right-arrow");
+        } else {
+          this.containerEl.style.display = "flex";
+          setIcon(btn, "cross");
+        }
+      });
     });
 
     this.redrawMoveList();

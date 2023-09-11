@@ -57,7 +57,6 @@ import "../assets/board-css/blue.css";
 import "../assets/board-css/green.css";
 import "../assets/board-css/purple.css";
 import "../assets/board-css/ic.css";
-import debug from "./debug";
 
 export function draw_chessboard(app: App, settings: ChesserSettings) {
   return (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
@@ -97,10 +96,10 @@ export class Chesser extends MarkdownRenderChild {
     this.save_shapes = this.save_shapes.bind(this);
 
     if (config.pgn) {
-      debug(() => console.debug("loading from pgn", config.pgn));
+      console.debug("loading from pgn", config.pgn);
       this.chess.load_pgn(config.pgn);
     } else if (config.fen) {
-      debug(() => console.debug("loading from fen", config.fen));
+      console.debug("loading from fen", config.fen);
       this.chess.load(config.fen);
     }
 
@@ -174,9 +173,7 @@ export class Chesser extends MarkdownRenderChild {
     try {
       return parseYaml(codeblockText);
     } catch (e) {
-      debug(() =>
-        console.debug("failed to parse codeblock's yaml config", codeblockText)
-      );
+      console.debug("failed to parse codeblock's yaml config", codeblockText);
       // failed to parse. show error...
     }
 
@@ -184,7 +181,7 @@ export class Chesser extends MarkdownRenderChild {
   }
 
   private write_config(config: Partial<ChesserConfig>) {
-    debug(() => console.debug("writing config into codeblock", config));
+    console.debug("writing config into codeblock", config);
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) {
       new Notice("Chesser: Failed to retrieve active view");

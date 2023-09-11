@@ -1,6 +1,23 @@
 .cg-wrap {
-  width: 400px;
-  height: 400px;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1;
+}
+
+.cg-wrap coords.files {
+  bottom: 2px !important;
+  left: 0px !important;
+  text-align: right !important;
+}
+
+.cg-wrap coords.ranks {
+  left: 2px !important;
+  top: 0px !important;
+}
+
+.cg-wrap coords.ranks coord {
+  transform: none !important;
+  line-height: normal !important;
 }
 
 .chesser-container {
@@ -16,6 +33,7 @@
   height: 100%;
   margin-left: 24px;
   width: calc(100% - 424px);
+  min-width: 127px;
 }
 
 .chess-toolbar-container {
@@ -27,11 +45,6 @@
 .chess-turn-text {
   font-weight: 500;
   margin: 8px 0;
-}
-
-/* temporary */
-.cg-wrap coords {
-  opacity: 0 !important;
 }
 
 .chess-move-list {
