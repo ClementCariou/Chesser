@@ -134,6 +134,15 @@ export default class ChesserMenu {
         navigator.clipboard.writeText(this.chesser.getFen());
       });
     });
+
+    btnContainer.createEl("a", "view-action", (btn: HTMLAnchorElement) => {
+      btn.ariaLabel = "Apply state";
+      setIcon(btn, "checkmark");
+      btn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        this.chesser.applyState();
+      });
+    });
   }
 
   redrawMoveList() {

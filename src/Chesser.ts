@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import {
   App,
   EditorPosition,
@@ -67,30 +66,16 @@ export function draw_chessboard(app: App, settings: ChesserSettings) {
   };
 }
 
-function read_state(id: string) {
-  const savedDataStr = localStorage.getItem(`chesser-${id}`);
-  try {
-    return JSON.parse(savedDataStr);
-  } catch (e) {
-    console.error(e);
-  }
-  return {};
-}
-
-function write_state(id: string, game_state: ChesserConfig) {
-  localStorage.setItem(`chesser-${id}`, JSON.stringify(game_state));
-}
-
 export class Chesser extends MarkdownRenderChild {
   private ctx: MarkdownPostProcessorContext;
   private app: App;
 
-  private id: string;
   private cg: Api;
   private chess: ChessInstance;
 
   private menu: ChesserMenu;
   private moves: Move[];
+  private shapes: DrawShape[];
 
   public currentMoveIdx: number;
 
@@ -104,24 +89,12 @@ export class Chesser extends MarkdownRenderChild {
 
     this.app = app;
     this.ctx = ctx;
-    this.id = user_config.id ?? nanoid(8);
     this.chess = new Chess();
 
-    const saved_config = read_state(this.id);
-    const config = Object.assign({}, user_config, saved_config);
+    const config = user_config;
 
     this.sync_board_with_gamestate = this.sync_board_with_gamestate.bind(this);
-    this.save_move = this.save_move.bind(this);
     this.save_shapes = this.save_shapes.bind(this);
-
-    // Save `id` into the codeblock yaml
-    if (user_config.id === undefined) {
-      this.app.workspace.onLayoutReady(() => {
-        window.setImmediate(() => {
-          this.write_config({ id: this.id });
-        });
-      });
-    }
 
     if (config.pgn) {
       debug(() => console.debug("loading from pgn", config.pgn));
@@ -131,7 +104,7 @@ export class Chesser extends MarkdownRenderChild {
       this.chess.load(config.fen);
     }
 
-    this.moves = config.moves ?? this.chess.history({ verbose: true });
+    this.moves = this.chess.history({ verbose: true });
     this.currentMoveIdx = config.currentMoveIdx ?? this.moves.length - 1;
 
     let lastMove: [Key, Key] = undefined;
@@ -167,7 +140,7 @@ export class Chesser extends MarkdownRenderChild {
     if (config.shapes) {
       this.app.workspace.onLayoutReady(() => {
         window.setTimeout(() => {
-          this.sync_board_with_gamestate(false);
+          this.sync_board_with_gamestate();
           this.cg.setShapes(config.shapes);
         }, 100);
       });
@@ -211,7 +184,7 @@ export class Chesser extends MarkdownRenderChild {
   }
 
   private write_config(config: Partial<ChesserConfig>) {
-    debug(() => console.debug("writing config to localStorage", config));
+    debug(() => console.debug("writing config into codeblock", config));
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) {
       new Notice("Chesser: Failed to retrieve active view");
@@ -221,35 +194,28 @@ export class Chesser extends MarkdownRenderChild {
       const updated = stringifyYaml({
         ...this.get_config(view),
         ...config,
+        shapes: this.shapes
       });
 
       const [from, to] = this.get_section_range();
-      view.editor.replaceRange(updated, from, to);
+      // Workaround: view.editor.replaceRange doesn't work in read mode
+      view.app.vault.read(view.file).then((content) => {
+        const lines = content.split("\n");
+        const newContent = lines.slice(0, from.line).join("\n") + "\n" + updated + lines.slice(to.line).join("\n");
+        view.app.vault.modify(view.file, newContent);
+      });
     } catch (e) {
       // failed to parse. show error...
       console.error("failed to write config", e);
     }
   }
 
-  private save_move() {
-    const config = read_state(this.id);
-    write_state(this.id, {
-      ...config,
-      currentMoveIdx: this.currentMoveIdx,
-      moves: this.moves,
-      pgn: this.chess.pgn(),
-    });
-  }
-
   private save_shapes(shapes: DrawShape[]) {
-    const config = read_state(this.id);
-    write_state(this.id, {
-      ...config,
-      shapes,
-    });
+    this.shapes = shapes;
+    console.log("Saving shapes");
   }
 
-  private sync_board_with_gamestate(shouldSave: boolean = true) {
+  private sync_board_with_gamestate() {
     this.cg.set({
       check: this.check(),
       turnColor: this.color_turn(),
@@ -261,9 +227,6 @@ export class Chesser extends MarkdownRenderChild {
     });
 
     this.menu?.redrawMoveList();
-    if (shouldSave) {
-      this.save_move();
-    }
   }
 
   public color_turn(): Color {
@@ -330,9 +293,6 @@ export class Chesser extends MarkdownRenderChild {
   public setFreeMove(enabled: boolean): void {
     if (enabled) {
       this.cg.set({
-        events: {
-          move: this.save_move,
-        },
         movable: {
           free: true,
           color: "both",
@@ -399,5 +359,9 @@ export class Chesser extends MarkdownRenderChild {
 
     this.cg.set({ fen: this.chess.fen(), lastMove });
     this.sync_board_with_gamestate();
+  }
+
+  public applyState(): void {
+    this.write_config({pgn: this.chess.pgn()});
   }
 }
