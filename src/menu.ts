@@ -78,6 +78,21 @@ export default class ChesserMenu {
       cls: "chess-menu-section chess-menu-section-tall",
     });
 
+    parentEl.createEl("a", "view-action", (btn: HTMLAnchorElement) => {
+      btn.ariaLabel = "Toggle menu";
+      setIcon(btn, "cross");
+      btn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        if (this.containerEl.style.display !== "none") {
+          this.containerEl.style.display = "none";
+          setIcon(btn, "right-arrow");
+        } else {
+          this.containerEl.style.display = "flex";
+          setIcon(btn, "cross");
+        }
+      });
+    });
+
     this.redrawMoveList();
     this.createToolbar();
   }
