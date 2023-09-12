@@ -191,7 +191,6 @@ export class Chesser extends MarkdownRenderChild {
       const updated = stringifyYaml({
         ...this.get_config(view),
         ...config,
-        shapes: this.shapes
       });
 
       const [from, to] = this.get_section_range();
@@ -209,7 +208,7 @@ export class Chesser extends MarkdownRenderChild {
 
   private save_shapes(shapes: DrawShape[]) {
     this.shapes = shapes;
-    console.log("Saving shapes");
+    console.debug("Saving shapes");
   }
 
   private sync_board_with_gamestate() {
@@ -359,6 +358,10 @@ export class Chesser extends MarkdownRenderChild {
   }
 
   public applyState(): void {
-    this.write_config({pgn: this.chess.pgn()});
+    this.write_config({
+      fen: this.currentMoveIdx < 0 ? this.chess.fen() : undefined,
+      pgn: this.currentMoveIdx >= 0 ? this.chess.pgn() : undefined,
+      shapes: this.shapes.map(({orig, dest, brush}) => ({orig, dest, brush}))
+    });
   }
 }
